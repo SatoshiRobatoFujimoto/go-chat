@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <title>Chat</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <nav class="navbar navbar-default">
+    <form class="navbar-form navbar-left">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <p class="navbar-brand">WebSocketを使ったチャット</p>
+        </div>
+        <img src="http://www.evanmiller.org/images/go-gopher3.png" class="img-responsive" alt="go-lang">
+    </form>
+    </nav>
+    
+    <div class="container">
+
+    <form id="chatbox">
+    <div class="text-info">{{.UserData.name}}からメッセージを送信</div>
+    <small><a href="/logout">サインアウト</a></small>
+
+ 　　<div class="row">
+ 　　　 <div class="col-md-8">
+           <textarea class="form-control" rows="1"></textarea>
+      　</div>
+ 　　　 <div class="col-md-2">
+          <input class="btn btn-primary" type="submit" value="送信" />
+    　 </div>
+    </div>
+
+     </form>
+    <hr>
+    <ul id="messages" class="list-group"></ul>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script>
+      $(function(){
+        var socket = null;
+        var msgBox = $("#chatbox textarea");
+        var messages = $("#messages");
+        $("#chatbox").submit(function(){
+          if (!msgBox.val()) return false;
+          if (!socket) {
+            alert("Error: WebSocket接続が行われていません");
+            return false;
+          }
+          socket.send(JSON.stringify({"Message": msgBox.val()}));
+          msgBox.val("");
+          return false;
+        });
+        if (!window["WebSocket"]) {
+          alert("Error: WebSocketに対応していないブラウザです")
+        } else {
+          socket = new WebSocket("ws://{{.Host}}/room");
+          socket.onclose = function() {
+            alert("接続が終了しました");
+          }
+          socket.onmessage = function(e) {
+            var msg = JSON.parse(e.data);
+            var when = msg.When;
+            messages.append(
+              $("<li>").attr('class','list-group-item').append(
+                $("<img>").css({
+                    width:50,
+                    verticalAlign:"middle"
+                }).attr("src",msg.AvatarURL),
+                $("<strong>").text(msg.Name + ": "),
+                $("<span>").attr("class","text-primary").text("(" + when + ") "),
+                $("<span>").text(msg.Message)
+              )
+            );
+          }
+        }
+      });
+    </script>
+    </div>
+  </body>
+</html>
